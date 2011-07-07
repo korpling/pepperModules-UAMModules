@@ -1,0 +1,30 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>de.hu_berlin.german.korpling.saltnpepper</groupId>
+  <artifactId>pepperModules.UAMModules</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>bundle</packaging>
+  <parent>
+  	<groupId>de.hu_berlin.german.korpling.saltnpepper.pepperModules</groupId>
+  	<artifactId>PepperParentModule</artifactId>
+  	<version>0.0.1</version>
+  </parent>
+   <scm>
+        <developerConnection>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/UAMModules/trunk</developerConnection>
+    </scm>
+  <build>
+  	<plugins>
+  	<plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.1</version>
+        <configuration>
+          <tagBase>
+            https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/UAMModules/tags
+          </tagBase>
+          <releaseProfiles>release</releaseProfiles>
+      		<goals>deploy assembly:single</goals>
+        </configuration>
+      </plugin>
+	</plugins>
+  </build>
+</project>

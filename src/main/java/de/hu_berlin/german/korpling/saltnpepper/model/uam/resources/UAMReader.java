@@ -1,0 +1,235 @@
+package de.hu_berlin.german.korpling.saltnpepper.model.uam.resources;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Stack;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.ext.DefaultHandler2;
+
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.Layer;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.Segment;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.Text;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMDocument;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMFactory;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions.UAMModelException;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions.UAMResourceException;
+import de.hu_berlin.german.korpling.saltnpepper.pepperModules.uamModules.exceptions.UAMModuleException;
+
+public class UAMReader extends DefaultHandler2
+{
+	private UAMDocument uamDocument= null;
+
+	public void setUamDocument(UAMDocument uamDocument) {
+		this.uamDocument = uamDocument;
+	}
+
+	public UAMDocument getUamDocument() {
+		return uamDocument;
+	}
+	
+	private Layer currLayer= null;
+	
+	
+	public Layer getCurrLayer() {
+		return currLayer;
+	}
+
+	public void setCurrLayer(Layer currLayer) {
+		this.currLayer = currLayer;
+	}
+
+	private File path2Text= null;
+	
+	
+	
+	public File getPath2Text() {
+		return path2Text;
+	}
+
+	public void setPath2Text(File path2Text) {
+		this.path2Text = path2Text;
+	}
+
+	
+	private File corpusPath= null;
+	
+	
+	public File getCorpusPath() {
+		return corpusPath;
+	}
+
+	public void setCorpusPath(File corpusPath) {
+		this.corpusPath = corpusPath;
+	}
+
+	public void startDocument() throws SAXException
+    {
+    }
+    
+    public void comment(char[] ch, int start, int length)
+    {
+    }
+    
+    /**
+	 * @see org.xml.sax.helpers.DefaultHandler#characters(char[], int, int)
+	 */
+	public void characters(	char[] ch,
+            				int start,
+            				int length) throws SAXException
+    {
+		if (isTextFile)
+		{//name of textFile
+			StringBuffer text= new StringBuffer();
+			for (int i= start; i< start+length; i++)
+				text.append(ch[i]);
+			String[] parts= text.toString().trim().split("/");
+			String textFileName= parts[parts.length-1];
+			textFileName= text.toString();
+
+			if (	(textFileName== null) ||
+					(textFileName.equals("")))
+				throw new UAMModelException("Cannot read UAMDocument, because path to textfile is corrupt: "+text+".");
+			parts= textFileName.split("[.]");
+			String textName= parts[parts.length-1];
+			if (	(textName== null) ||
+					(textName.equals("")))
+				throw new UAMModelException("Cannot read UAMDocument, because path to textfile is corrupt: "+text+".");
+			
+			boolean alreadyContainsText= false;
+			if (	(this.getUamDocument().getTexts()!= null) &&
+					(this.getUamDocument().getTexts().size()>0))
+			{
+				for (Text uamText: this.getUamDocument().getTexts())
+				{
+					if (uamText.getName().equals(textName))
+					{
+						alreadyContainsText= true;
+						this.currText= uamText;
+						break;
+					}
+				}
+			}
+			if (!alreadyContainsText)
+			{
+				File textFile= new File(this.getPath2Text().getAbsolutePath()+ "/"+ textFileName);
+				if (!textFile.exists())
+					throw new UAMResourceException("Cannot read primary data ('"+textFile.getAbsolutePath()+"') refered by file: ");
+				StringBuffer contents = new StringBuffer();
+				BufferedReader reader = null;
+				try {
+					reader = new BufferedReader(new FileReader(textFile));
+				    String inputText = null;
+				    // repeat until all lines is read
+				    while ((inputText = reader.readLine()) != null) 
+				    {
+				    	contents.append(inputText).append(System.getProperty("line.separator"));
+				    }
+				} catch (FileNotFoundException e) {
+					throw new UAMModelException("", e);
+				} catch (IOException e) {
+					throw new UAMModelException("", e);
+				} finally {
+					try {
+						if (reader != null) {
+							reader.close();
+						}
+					} catch (IOException e) {
+						throw new UAMModelException("", e);
+					}
+				}
+				Text uamText= UAMFactory.eINSTANCE.createText();
+				uamText.setText(contents.toString());
+				uamText.setName(textName);
+				this.getUamDocument().getTexts().add(uamText);
+				this.currText= uamText;
+			}
+		}//name of textFile
+    }
+	
+	/**
+	 * The current object, to store a textual value into it.
+	 */
+	private Stack<String> currXMLElementName= null;
+	
+	/**
+	 * Stores the current text.
+	 */
+	private Text currText= null;
+	
+	public Stack<String> getCurrXMLElementName() {
+		if (currXMLElementName== null)
+		{
+			synchronized (this) 
+			{
+				if (currXMLElementName== null)
+				{
+					currXMLElementName= new Stack<String>();
+				}
+			}
+		}
+		return currXMLElementName;
+	}
+
+//	private static final String XML_ELEMENT_HEADER= "header";
+	public static final String XML_ELEMENT_SEGMENT= "segment";
+	public static final String XML_ELEMENT_TEXTFILE= "textfile";
+	public static final String XML_ATTRIBUTE_SEGMENT_ID= "id";
+	public static final String XML_ATTRIBUTE_SEGMENT_FEATURE= "features";
+	public static final String XML_ATTRIBUTE_SEGMENT_START= "start";
+	public static final String XML_ATTRIBUTE_SEGMENT_END= "end";
+	public static final String XML_ATTRIBUTE_SEGMENT_STATE= "state";
+	
+	
+	private boolean isTextFile= false;
+	/**
+	 * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
+	 */
+	@Override
+	public void startElement(	String uri,
+            					String localName,
+            					String qName,
+            					Attributes attributes) throws SAXException
+    {
+		if (qName.equalsIgnoreCase(XML_ELEMENT_TEXTFILE))
+		{
+			this.isTextFile= true;
+		}
+		else if (qName.equalsIgnoreCase(XML_ELEMENT_SEGMENT))
+		{
+			Segment segment= UAMFactory.eINSTANCE.createSegment();
+			this.getCurrLayer().getSegments().add(segment);
+			if (this.currText== null)
+				throw new UAMResourceException("Cannot set the corresponding text to segment, because it is null.");
+			segment.setSourceText(this.currText);
+			
+			segment.setId(attributes.getValue(XML_ATTRIBUTE_SEGMENT_ID));
+			segment.setFeatures(attributes.getValue(XML_ATTRIBUTE_SEGMENT_FEATURE));
+			segment.setState(attributes.getValue(XML_ATTRIBUTE_SEGMENT_STATE));
+			try{
+				segment.setStart(new Integer(attributes.getValue(XML_ATTRIBUTE_SEGMENT_START)));
+				segment.setEnd(new Integer(attributes.getValue(XML_ATTRIBUTE_SEGMENT_END)));
+			}
+			catch (NumberFormatException e)
+			{//do nothing in this case
+			}//do nothing in this case
+		}
+		this.getCurrXMLElementName().push(qName);
+    }
+	
+	@Override
+	public void endElement(String namespaceURI, String localName, String qName) throws SAXException
+	{
+		if (!this.getCurrXMLElementName().peek().equalsIgnoreCase(qName))
+			throw new UAMModuleException("The given file is not wellformed. Expected element is: "+this.getCurrXMLElementName().peek() + ", but given is: "+qName);
+		if (qName.equalsIgnoreCase(XML_ELEMENT_TEXTFILE))
+		{
+			this.isTextFile= false;
+		}
+		this.getCurrXMLElementName().pop();
+	}
+}
