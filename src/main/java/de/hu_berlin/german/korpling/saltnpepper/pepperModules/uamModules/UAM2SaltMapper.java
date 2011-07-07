@@ -217,7 +217,6 @@ public class UAM2SaltMapper {
 	 */
 	private void mapSegment2SAnnotation(Segment segment, SNode sNode)
 	{
-		System.out.println("--------> mapSegment2SAnnotation("+segment+", "+sNode+")");
 		SAnnotation sAnno= null;
 		
 		sAnno= SaltFactory.eINSTANCE.createSAnnotation();
@@ -225,11 +224,9 @@ public class UAM2SaltMapper {
 		sAnno.setSValue(segment.getState());
 		sNode.addSAnnotation(sAnno);
 		
-		System.out.println("--------> sAnno: "+sAnno);
 		sAnno= SaltFactory.eINSTANCE.createSAnnotation();
 		sAnno.setSName("features");
 		sAnno.setSValue(segment.getFeatures());
-		System.out.println("--------> sAnno: "+sAnno);
 		sNode.addSAnnotation(sAnno);
 	}
 }
