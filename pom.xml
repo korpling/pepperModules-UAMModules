@@ -4,6 +4,12 @@
   <artifactId>UAMModules</artifactId>
   <version>0.0.2-SNAPSHOT</version>
   <packaging>bundle</packaging>
+  <repositories>
+    <repository>
+      <id>SaltNPepper Repository</id>
+            <url>https://korpling.german.hu-berlin.de/~annis/maven2/saltnpepper/</url>
+    </repository>
+  </repositories>
   <parent>
   	<groupId>de.hu_berlin.german.korpling.saltnpepper.pepperModules</groupId>
   	<artifactId>PepperParentModule</artifactId>
