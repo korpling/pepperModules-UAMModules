@@ -230,6 +230,14 @@ public class UAMReader extends DefaultHandler2
 			try{
 				segment.setStart(new Integer(attributes.getValue(XML_ATTRIBUTE_SEGMENT_START)));
 				segment.setEnd(new Integer(attributes.getValue(XML_ATTRIBUTE_SEGMENT_END)));
+				if (segment.getEnd()< segment.getStart())
+				{//end has a smaller value than start, it seems to be a mistake --> switch values
+					int tmpStart= segment.getStart();
+					segment.setStart(segment.getEnd());
+					segment.setEnd(tmpStart);
+				}//end has a smaller value than start, it seems to be a mistake --> switch values
+				if (segment.getEnd()>= this.currText.getText().length())
+					throw new UAMResourceException("Cannot read given corpus, because the attribute '"+XML_ATTRIBUTE_SEGMENT_END+"' contains a value ("+segment.getEnd()+") is larger than the max. size of the text ("+this.currText.getText().length()+").");
 			}
 			catch (NumberFormatException e)
 			{//do nothing in this case
