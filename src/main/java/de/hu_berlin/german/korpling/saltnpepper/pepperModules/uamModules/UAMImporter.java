@@ -36,7 +36,6 @@ import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
-import org.osgi.service.component.ComponentContext;
 import org.osgi.service.log.LogService;
 
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMDocument;
@@ -45,9 +44,7 @@ import de.hu_berlin.german.korpling.saltnpepper.model.uam.resources.UAMResource;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.resources.UAMResourceFactory;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperExceptions.PepperFWException;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperExceptions.PepperModuleException;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.FormatDefinition;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperImporter;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperInterfaceFactory;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.impl.PepperImporterImpl;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.uamModules.exceptions.UAMModuleException;
 import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
@@ -72,49 +69,11 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter
 	public UAMImporter()
 	{
 		super();
-		
-		{//setting name of module
-			this.name= "UAMImporter";
-		}//setting name of module
-		
-		{//for testing the symbolic name has to be set without osgi
-			if (	(this.getSymbolicName()==  null) ||
-					(this.getSymbolicName().equals("")))
-				this.setSymbolicName("de.hu_berlin.german.korpling.saltnpepper.pepperModules.UAMModules");
-		}//for testing the symbolic name has to be set without osgi
-		
-		{//set list of formats supported by this module
-			this.supportedFormats= new BasicEList<FormatDefinition>();
-			FormatDefinition formatDef= PepperInterfaceFactory.eINSTANCE.createFormatDefinition();
-			formatDef.setFormatName("UAM");
-			formatDef.setFormatVersion("1.0");
-			this.supportedFormats.add(formatDef);
-		}
-		
-		{//just for logging: to say, that the current module has been loaded
-			if (this.getLogService()!= null)
-				this.getLogService().log(LogService.LOG_DEBUG,this.getName()+" is created...");
-		}//just for logging: to say, that the current module has been loaded
+		//setting name of module
+		this.name= "UAMImporter";
+		//set list of formats supported by this module
+		this.addSupportedFormat("UAM", "1.0", null);
 	}
-		
-//===================================== start: performance variables
-//	/**
-//	 * Measured time which is needed to import the corpus structure. 
-//	 */
-//	private Long timeImportSCorpusStructure= 0l;
-//	/**
-//	 * Measured total time which is needed to import the document corpus structure. 
-//	 */
-//	private Long totalTimeImportSDocumentStructure= 0l;
-//	/**
-//	 * Measured time which is needed to load all documents into uam model.. 
-//	 */
-//	private Long totalTimeToLoadDocument= 0l;
-//	/**
-//	 * Measured time which is needed to map all documents to salt. 
-//	 */
-//	private Long totalTimeToMapDocument= 0l;
-//===================================== end: performance variables
 	
 //===================================== start: thread number
 	/**
@@ -453,10 +412,6 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter
 		 */
 		public void start()
 		{
-			//TODO remove
-			if (getLogService()!= null)
-				getLogService().log(LogService.LOG_DEBUG, "----> HIER01");
-			
 			if (mapper== null)
 				throw new UAMImporterException("BUG: Cannot start import, because the mapper is null.");
 			if (sDocument== null)
@@ -515,35 +470,4 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter
 			this.lock.unlock();
 		}
 	}
-	
-//================================ start: methods used by OSGi
-	/**
-	 * This method is called by the OSGi framework, when a component with this class as class-entry
-	 * gets activated.
-	 * @param componentContext OSGi-context of the current component
-	 */
-	protected void activate(ComponentContext componentContext) 
-	{
-		this.setSymbolicName(componentContext.getBundleContext().getBundle().getSymbolicName());
-		{//just for logging: to say, that the current module has been activated
-			if (this.getLogService()!= null)
-				this.getLogService().log(LogService.LOG_DEBUG,this.getName()+" is activated...");
-		}//just for logging: to say, that the current module has been activated
-	}
-
-	/**
-	 * This method is called by the OSGi framework, when a component with this class as class-entry
-	 * gets deactivated.
-	 * @param componentContext OSGi-context of the current component
-	 */
-	protected void deactivate(ComponentContext componentContext) 
-	{
-		{//just for logging: to say, that the current module has been deactivated
-			if (this.getLogService()!= null)
-				this.getLogService().log(LogService.LOG_DEBUG,this.getName()+" is deactivated...");
-		}	
-	}
-//================================ start: methods used by OSGi
-
-	
 }
