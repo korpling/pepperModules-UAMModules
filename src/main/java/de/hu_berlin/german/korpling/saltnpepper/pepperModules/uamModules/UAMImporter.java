@@ -205,13 +205,13 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter
 		File corpusPath= new File(this.getCorpusDefinition().getCorpusPath().toFileString());
 		
 		if (!corpusPath.exists())
-			throw new UAMModuleException("Cannot import corpus, because the given file-uri does not exists:"+corpusPath+" .");
+			throw new UAMModuleException("Cannot import corpus, because the given file-uri does not exist:"+corpusPath+" .");
 		if (!corpusPath.isDirectory())
 			throw new UAMModuleException("Cannot import corpus, because the given file-uri '"+corpusPath+"'is not a directory .");
 		
 		File analysesPath= new File(corpusPath.getAbsoluteFile()+ "/analyses/");
 		if (!analysesPath.exists())
-			throw new UAMModuleException("Cannot import corpus, because an analyses folder does not exists for given uri:"+corpusPath+" .");
+			throw new UAMModuleException("Cannot import corpus, because an analyses folder does not exist for given uri:"+corpusPath+" .");
 		if (!analysesPath.isDirectory())
 			throw new UAMModuleException("Cannot import corpus, because the analyses folder for :"+corpusPath+" is not a folder.");
 		
@@ -349,7 +349,7 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter
 				{
 					File path2Corpus= new File(this.getCorpusDefinition().getCorpusPath().toFileString()+ "/"+PATH_TO_TEXT);
 					if (!path2Corpus.exists())
-						throw new UAMImporterException("Cannot import document, because path to corpus '"+path2Corpus.getAbsolutePath()+"' does not exists.");
+						throw new UAMImporterException("Cannot import document, because path to corpus '"+path2Corpus.getAbsolutePath()+"' does not exist.");
 					resourceOptions= new Hashtable<String, String>();
 					resourceOptions.put(UAMResource.PROP_PATH_2_TEXT, path2Corpus.getAbsolutePath());
 				}
