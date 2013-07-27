@@ -76,7 +76,7 @@ public class UAMResource extends ResourceImpl
 		
 		File uamPath= new File(this.getURI().toFileString());
 		if (!uamPath.exists()) 
-			throw new UAMModelException("Cannot load resource, because the file does not exists: " + uamPath);
+			throw new UAMModelException("Cannot load resource, because the file does not exist: " + uamPath);
 		
 		if (!uamPath.canRead())
 			throw new UAMModelException("Cannot load resource, because the file can not be read: " + uamPath);
