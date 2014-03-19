@@ -18,23 +18,19 @@
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.uamModules;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.log.LogService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions.UAMImporterException;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.resources.UAMResource;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperExceptions.PepperModuleException;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperImporter;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperMapper;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.impl.PepperImporterImpl;
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.uamModules.exceptions.UAMModuleException;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperImporter;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperMapper;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.exceptions.PepperModuleException;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.impl.PepperImporterImpl;
 import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpus;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusDocumentRelation;
@@ -53,11 +49,12 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 @Component(name="UAMImporterComponent", factory="PepperImporterComponentFactory")
 public class UAMImporter extends PepperImporterImpl implements PepperImporter
 {
+	private static final Logger logger= LoggerFactory.getLogger(UAMImporter.class); 
 	public UAMImporter()
 	{
 		super();
 		//setting name of module
-		this.name= "UAMImporter";
+		this.setName("UAMImporter");
 		//set list of formats supported by this module
 		this.addSupportedFormat("UAM", "1.0", null);
 	}
@@ -72,26 +69,25 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter
 	public synchronized void importCorpusStructure(SCorpusGraph sCorpusGraph)
 			throws PepperModuleException
 	{
-		if (this.getCorpusDefinition()== null)
-			throw new UAMModuleException("Cannot import corpus, because no CorpusDefinition object is given.");
-		if (this.getCorpusDefinition().getCorpusPath()== null)
-			throw new UAMModuleException("Cannot import corpus, because the given uri is empty.");
+		if (this.getCorpusDesc()== null)
+			throw new PepperModuleException(this, "Cannot import corpus, because no CorpusDefinition object is given.");
+		if (this.getCorpusDesc().getCorpusPath()== null)
+			throw new PepperModuleException(this, "Cannot import corpus, because the given uri is empty.");
 		
-		if (getLogService()!= null)
-			getLogService().log(LogService.LOG_DEBUG, this.getClass().getName()+ "> start importing of corpus structure for path '"+this.getCorpusDefinition().getCorpusPath()+"'... ");
+		logger.debug(this.getClass().getName()+ "> start importing of corpus structure for path '"+this.getCorpusDesc().getCorpusPath()+"'... ");
 		
-		File corpusPath= new File(this.getCorpusDefinition().getCorpusPath().toFileString());
+		File corpusPath= new File(this.getCorpusDesc().getCorpusPath().toFileString());
 		
 		if (!corpusPath.exists())
-			throw new UAMModuleException("Cannot import corpus, because the given file-uri does not exist:"+corpusPath+" .");
+			throw new PepperModuleException(this, "Cannot import corpus, because the given file-uri does not exist:"+corpusPath+" .");
 		if (!corpusPath.isDirectory())
-			throw new UAMModuleException("Cannot import corpus, because the given file-uri '"+corpusPath+"'is not a directory .");
+			throw new PepperModuleException(this, "Cannot import corpus, because the given file-uri '"+corpusPath+"'is not a directory .");
 		
 		File analysesPath= new File(corpusPath.getAbsoluteFile()+ "/analyses/");
 		if (!analysesPath.exists())
-			throw new UAMModuleException("Cannot import corpus, because an analyses folder does not exist for given uri:"+corpusPath+" .");
+			throw new PepperModuleException(this, "Cannot import corpus, because an analyses folder does not exist for given uri:"+corpusPath+" .");
 		if (!analysesPath.isDirectory())
-			throw new UAMModuleException("Cannot import corpus, because the analyses folder for :"+corpusPath+" is not a folder.");
+			throw new PepperModuleException(this, "Cannot import corpus, because the analyses folder for :"+corpusPath+" is not a folder.");
 		
 		for (File corpusResource: analysesPath.listFiles())
 		{// one folder as super corpus
@@ -136,9 +132,9 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter
 			synchronized (this) {
 				if (resourceOptions== null)
 				{
-					File path2Corpus= new File(this.getCorpusDefinition().getCorpusPath().toFileString()+ "/"+PATH_TO_TEXT);
+					File path2Corpus= new File(this.getCorpusDesc().getCorpusPath().toFileString()+ "/"+PATH_TO_TEXT);
 					if (!path2Corpus.exists())
-						throw new UAMImporterException("Cannot import document, because path to corpus '"+path2Corpus.getAbsolutePath()+"' does not exist.");
+						throw new PepperModuleException(this, "Cannot import document, because path to corpus '"+path2Corpus.getAbsolutePath()+"' does not exist.");
 					resourceOptions= new Hashtable<String, String>();
 					resourceOptions.put(UAMResource.PROP_PATH_2_TEXT, path2Corpus.getAbsolutePath());
 				}
