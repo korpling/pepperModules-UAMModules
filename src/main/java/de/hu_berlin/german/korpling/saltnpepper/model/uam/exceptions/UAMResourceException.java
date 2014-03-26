@@ -17,9 +17,8 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions;
 
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.uamModules.exceptions.UAMModuleException;
 
-public class UAMResourceException extends UAMModuleException{
+public class UAMResourceException extends RuntimeException{
 
 	/**
 	 * 
