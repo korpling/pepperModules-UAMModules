@@ -35,7 +35,6 @@ import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMDocument;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMFactory;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions.UAMModelException;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions.UAMResourceException;
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.uamModules.exceptions.UAMModuleException;
 
 public class UAMReader extends DefaultHandler2
 {
@@ -250,7 +249,7 @@ public class UAMReader extends DefaultHandler2
 	public void endElement(String namespaceURI, String localName, String qName) throws SAXException
 	{
 		if (!this.getCurrXMLElementName().peek().equalsIgnoreCase(qName))
-			throw new UAMModuleException("The given file is not wellformed. Expected element is: "+this.getCurrXMLElementName().peek() + ", but given is: "+qName);
+			throw new UAMResourceException("The given file is not wellformed. Expected element is: "+this.getCurrXMLElementName().peek() + ", but given is: "+qName);
 		if (qName.equalsIgnoreCase(XML_ELEMENT_TEXTFILE))
 		{
 			this.isTextFile= false;

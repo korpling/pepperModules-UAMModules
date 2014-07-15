@@ -17,16 +17,24 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.uamModules;
 
+import java.io.IOException;
 import java.util.Hashtable;
+import java.util.Map;
 
-import org.eclipse.emf.common.util.URI;
-import org.osgi.service.log.LogService;
+import org.eclipse.emf.ecore.resource.Resource;
+import org.eclipse.emf.ecore.resource.ResourceSet;
+import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.Layer;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.Segment;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.Text;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMDocument;
-import de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions.UAMImporterException;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.resources.UAMResourceFactory;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.common.DOCUMENT_STATUS;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.exceptions.PepperModuleException;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.impl.PepperMapperImpl;
 import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.STextualDS;
@@ -36,77 +44,63 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SAnnotation;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SLayer;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SNode;
 
-public class UAM2SaltMapper {
-	// ================================================ start: LogService	
-	private LogService logService;
-
-	public void setLogService(LogService logService) 
-	{
-		this.logService = logService;
-	}
-	
-	public LogService getLogService() 
-	{
-		return(this.logService);
-	}
-// ================================================ end: LogService
-// ================================================ start: physical path of the uam-documents
-	/**
-	 * Stores the physical path of the uam-documents.
-	 */
-	private URI currentUAMDocument= null;
-	/**
-	 * @param currentuamDocument the currentuamDocument to set
-	 */
-	public void setCurrentUAMDocument(URI currentUAMDocument) {
-		this.currentUAMDocument = currentUAMDocument;
-	}
-
-	/**
-	 * @return the currentuamDocument
-	 */
-	public URI getCurrentUAMDocument() {
-		return currentUAMDocument;
-	}
-	
-// ================================================ end: physical path of the uam-documents
-// ================================================ start: current SDocument	
-	private SDocument currentSDocument= null;
-	/**
-	 * @param currentSDocument the currentSDocument to set
-	 */
-	public void setCurrentSDocument(SDocument currentSDocument) {
-		this.currentSDocument = currentSDocument;
-	}
-
-	/**
-	 * @return the currentSDocument
-	 */
-	public SDocument getCurrentSDocument() {
-		return this.currentSDocument;
-	}
-// ================================================ end: current SDocument
+public class UAM2SaltMapper extends PepperMapperImpl{
+	private static final Logger logger= LoggerFactory.getLogger(UAM2SaltMapper.class); 
 	/**
 	 * contains the mapping of an Text object to its corresponding STextualDS object
 	 */
 	private Hashtable<Text, STextualDS> text2STextualDS= null;
 	
+	private UAMDocument uamDocument= null;
+	
 	/**
-	 * Maps a given UAMDocument object to a given SDocument object.
-	 * @param uamDocument object to map
-	 * @param sDocument object to map to
+	 * {@inheritDoc PepperMapper#setSDocument(SDocument)}
+	 * 
+	 * OVERRIDE THIS METHOD FOR CUSTOMIZED MAPPING.
 	 */
-	public void mapUAMDocument2SDocument(UAMDocument uamDocument, SDocument sDocument)
-	{
+	@Override
+	public DOCUMENT_STATUS mapSDocument() {
+		if (getResourceURI()== null)
+			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because uri for UAM document is null.");
 		if (uamDocument== null)
-			throw new UAMImporterException("Cannot map the given uamDocument to sDocument, because uamDocument is null.");
-		if (sDocument== null)
-			throw new UAMImporterException("Cannot map the given uamDocument to sDocument, because sDocument is null.");
-				
-		sDocument.setSName(uamDocument.getName());
-		sDocument.setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
+			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because uamDocument is null.");
+		if (getSDocument()== null)
+			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because sDocument is null.");
+		
+		if (getSDocument().getSDocumentGraph()== null)
+			getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
+		
+		
+		ResourceSet resourceSet = new ResourceSetImpl();
+		// Register XML resource factory
+		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put(null, new UAMResourceFactory());
+		//this is because a lot of folders in uam ends with .txt when primary data are in txt format
+		resourceSet.getResourceFactoryRegistry().getExtensionToFactoryMap().put("txt", new UAMResourceFactory());
+		//load resource 
+		Resource resource = resourceSet.createResource(getResourceURI());
+		
+		if (resource== null)
+			throw new PepperModuleException(this, "Cannot load the UAMDocument for path: "+ getResourceURI()+", becuase the resource is null.");
+		try {
+			resource.load(getResourceOptions());
+		} catch (IOException e) 
+		{
+			throw new PepperModuleException(this, "Cannot load the uam file: "+ getResourceURI()+".", e);
+		}
+		if (resource.getContents().size()!= 0)
+		{
+			Object obj= resource.getContents().get(0);
+			if (	(obj!= null)&&
+					(obj instanceof UAMDocument))
+			{
+				UAMDocument uamDocument= (UAMDocument) resource.getContents().get(0);
+			}
+		}
+		
+		getSDocument().setSName(uamDocument.getName());
+		getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
 		{//map primary texts
-			text2STextualDS= mapText2STextualDS(uamDocument, sDocument);
+			text2STextualDS= mapText2STextualDS(uamDocument, getSDocument());
 		}//map primary texts
 		
 		if (	(uamDocument.getLayers()!= null)&&
@@ -117,7 +111,7 @@ public class UAM2SaltMapper {
 				if (layer!= null)
 				{
 					SLayer sLayer= null;
-					sLayer= this.mapLayer2SLayer(layer, sDocument);
+					sLayer= this.mapLayer2SLayer(layer, getSDocument());
 					if (	(layer.getSegments()!= null)&&
 							(layer.getSegments().size()> 0))
 					{
@@ -125,7 +119,7 @@ public class UAM2SaltMapper {
 						{
 							if(segment!= null)
 							{
-								SToken sToken= mapSegments2SToken(segment, sDocument);
+								SToken sToken= mapSegments2SToken(segment, getSDocument());
 								sLayer.getSNodes().add(sToken);
 								mapSegment2SAnnotation(segment, sToken);
 							}
@@ -134,6 +128,17 @@ public class UAM2SaltMapper {
 				}
 			}
 		}
+		return(DOCUMENT_STATUS.COMPLETED);
+	}
+	
+	private Map<String, String> resourceOptions= null;
+	public void setResourceOptions(Map<String, String> resourceOptions)
+	{
+		this.resourceOptions= resourceOptions;
+	}
+	public Map<String, String> getResourceOptions()
+	{
+		return(resourceOptions);
 	}
 	
 	/**
@@ -219,9 +224,9 @@ public class UAM2SaltMapper {
 						sTextRel.setSEnd(segment.getEnd());
 						sDocument.getSDocumentGraph().addSRelation(sTextRel);
 					}
-					else this.getLogService().log(LogService.LOG_WARNING, "Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getSId()+"'.");
+					logger.warn("Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getSId()+"'.");
 				}
-				else this.getLogService().log(LogService.LOG_WARNING, "Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getSId()+"'.");
+				logger.warn("Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getSId()+"'.");
 			}//create relation to STextualDS
 		}
 		return(sToken);
