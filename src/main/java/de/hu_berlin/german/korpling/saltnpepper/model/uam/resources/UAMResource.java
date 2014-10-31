@@ -24,6 +24,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -116,6 +117,7 @@ public class UAMResource extends ResourceImpl
 				        uamReader.setUamDocument(uamDocument);
 				        uamReader.setCurrLayer(layer);
 				        uamReader.setCorpusPath(uamPath);
+				        uamReader.setDocumentURI(URI.createFileURI(uamFile.getAbsolutePath()));
 				        xmlReader.setContentHandler(uamReader);
 				        
 				        //setting LexicalHandler to read DTD

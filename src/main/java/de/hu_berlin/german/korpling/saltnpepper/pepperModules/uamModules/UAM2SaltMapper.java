@@ -31,6 +31,7 @@ import de.hu_berlin.german.korpling.saltnpepper.model.uam.Layer;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.Segment;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.Text;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMDocument;
+import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMFactory;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.resources.UAMResourceFactory;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.common.DOCUMENT_STATUS;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.exceptions.PepperModuleException;
@@ -62,8 +63,10 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 	public DOCUMENT_STATUS mapSDocument() {
 		if (getResourceURI()== null)
 			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because uri for UAM document is null.");
-		if (uamDocument== null)
-			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because uamDocument is null.");
+		if (uamDocument== null){
+//			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because uamDocument is null.");
+			uamDocument= UAMFactory.eINSTANCE.createUAMDocument();
+		}
 		if (getSDocument()== null)
 			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because sDocument is null.");
 		

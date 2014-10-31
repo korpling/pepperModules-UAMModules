@@ -24,6 +24,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Stack;
 
+import org.eclipse.emf.common.util.URI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.DefaultHandler2;
@@ -38,6 +41,8 @@ import de.hu_berlin.german.korpling.saltnpepper.model.uam.exceptions.UAMResource
 
 public class UAMReader extends DefaultHandler2
 {
+	
+	private Logger logger= LoggerFactory.getLogger(UAMReader.class); 
 	private UAMDocument uamDocument= null;
 
 	public void setUamDocument(UAMDocument uamDocument) {
@@ -47,7 +52,17 @@ public class UAMReader extends DefaultHandler2
 	public UAMDocument getUamDocument() {
 		return uamDocument;
 	}
+	/** File which has to be imported by that reader**/
+	private URI documentURI= null;
 	
+	/** Returns URI of File, which is to import by this reader. **/
+	public URI getDocumentURI() {
+		return documentURI;
+	}
+	/** Stes the URI of File, which is to import by this reader. **/
+	public void setDocumentURI(URI documentURI) {
+		this.documentURI = documentURI;
+	}
 	private Layer currLayer= null;
 	
 	
@@ -236,7 +251,9 @@ public class UAMReader extends DefaultHandler2
 					segment.setEnd(tmpStart);
 				}//end has a smaller value than start, it seems to be a mistake --> switch values
 				if (segment.getEnd()>= this.currText.getText().length())
-					throw new UAMResourceException("Cannot read given corpus, because the attribute '"+XML_ATTRIBUTE_SEGMENT_END+"' contains a value ("+segment.getEnd()+") is larger than the max. size of the text ("+this.currText.getText().length()+").");
+					segment.setEnd(this.currText.getText().length());
+					logger.warn("The end of a 'segment' in file '"+getDocumentURI()+"' is bigger than the max. size of the text ("+this.currText.getText().length()+"). Therefore the end of the segment was cutted at end of the text. ");
+//					throw new UAMResourceException("Cannot read given corpus, because the attribute '"+XML_ATTRIBUTE_SEGMENT_END+"' in file '"+getDocumentURI()+"' contains a value ("+segment.getEnd()+") which is larger than the max. size of the text ("+this.currText.getText().length()+").");
 			}
 			catch (NumberFormatException e)
 			{//do nothing in this case
