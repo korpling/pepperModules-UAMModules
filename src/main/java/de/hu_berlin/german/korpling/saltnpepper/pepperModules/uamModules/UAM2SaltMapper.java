@@ -120,7 +120,7 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 							if(segment!= null)
 							{
 								SToken sToken= mapSegments2SToken(segment, getSDocument());
-								sLayer.getSNodes().add(sToken);
+								sToken.getSLayers().add(sLayer);
 								mapSegment2SAnnotation(segment, sToken);
 							}
 						}
