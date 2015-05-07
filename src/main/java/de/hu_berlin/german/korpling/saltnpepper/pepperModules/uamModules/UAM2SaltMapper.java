@@ -1,5 +1,5 @@
 /**
- * Copyright 2009 Humboldt University of Berlin, INRIA.
+ * Copyright 2009 Humboldt-Universität zu Berlin, INRIA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 							if(segment!= null)
 							{
 								SToken sToken= mapSegments2SToken(segment, getSDocument());
-								sLayer.getSNodes().add(sToken);
+								sToken.getSLayers().add(sLayer);
 								mapSegment2SAnnotation(segment, sToken);
 							}
 						}
