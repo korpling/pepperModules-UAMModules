@@ -39,103 +39,107 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 
 /**
- * This PepperImporter imports data from the UAM tools output. Please note, that not the entire format structure is supported,
- * the importer only considers the content of the /corpus and /analyses folders. 
+ * This PepperImporter imports data from the UAM tools output. Please note, that
+ * not the entire format structure is supported, the importer only considers the
+ * content of the /corpus and /analyses folders.
  * 
  * @author Florian Zipser
  * @version 1.0
  *
  */
-@Component(name="UAMImporterComponent", factory="PepperImporterComponentFactory")
-public class UAMImporter extends PepperImporterImpl implements PepperImporter
-{
-	private static final Logger logger= LoggerFactory.getLogger(UAMImporter.class); 
-	public UAMImporter()
-	{
+@Component(name = "UAMImporterComponent", factory = "PepperImporterComponentFactory")
+public class UAMImporter extends PepperImporterImpl implements PepperImporter {
+	private static final Logger logger = LoggerFactory.getLogger(UAMImporter.class);
+
+	public UAMImporter() {
 		super();
-		//setting name of module
+		// setting name of module
 		this.setName("UAMImporter");
-		//set list of formats supported by this module
+		setSupplierContact(URI.createURI("saltnpepper@lists.hu-berlin.de"));
+		setSupplierHomepage(URI.createURI("https://github.com/korpling/pepperModules-UAMModules"));
+		setDesc("This importer transforms data in UAM format produced by the UAM corpus tool to a Salt model. ");
+		// set list of formats supported by this module
 		this.addSupportedFormat("UAM", "1.0", null);
 	}
-	
-	private static final String PATH_TO_TEXT="./Corpus";
-	
+
+	private static final String PATH_TO_TEXT = "./Corpus";
+
 	/**
 	 * 
-	 * @param an empty graph given by Pepper, which shall contains the corpus structure
+	 * @param an
+	 *            empty graph given by Pepper, which shall contains the corpus
+	 *            structure
 	 */
 	@Override
-	public synchronized void importCorpusStructure(SCorpusGraph sCorpusGraph)
-			throws PepperModuleException
-	{
-		if (this.getCorpusDesc()== null)
+	public synchronized void importCorpusStructure(SCorpusGraph sCorpusGraph) throws PepperModuleException {
+		if (this.getCorpusDesc() == null)
 			throw new PepperModuleException(this, "Cannot import corpus, because no CorpusDefinition object is given.");
-		if (this.getCorpusDesc().getCorpusPath()== null)
+		if (this.getCorpusDesc().getCorpusPath() == null)
 			throw new PepperModuleException(this, "Cannot import corpus, because the given uri is empty.");
-		
-		logger.debug(this.getClass().getName()+ "> start importing of corpus structure for path '"+this.getCorpusDesc().getCorpusPath()+"'... ");
-		
-		File corpusPath= new File(this.getCorpusDesc().getCorpusPath().toFileString());
-		
+
+		logger.debug(this.getClass().getName() + "> start importing of corpus structure for path '" + this.getCorpusDesc().getCorpusPath() + "'... ");
+
+		File corpusPath = new File(this.getCorpusDesc().getCorpusPath().toFileString());
+
 		if (!corpusPath.exists())
-			throw new PepperModuleException(this, "Cannot import corpus, because the given file-uri does not exist:"+corpusPath+" .");
+			throw new PepperModuleException(this, "Cannot import corpus, because the given file-uri does not exist:" + corpusPath + " .");
 		if (!corpusPath.isDirectory())
-			throw new PepperModuleException(this, "Cannot import corpus, because the given file-uri '"+corpusPath+"'is not a directory .");
-		
-		File analysesPath= new File(corpusPath.getAbsoluteFile()+ "/analyses/");
+			throw new PepperModuleException(this, "Cannot import corpus, because the given file-uri '" + corpusPath + "'is not a directory .");
+
+		File analysesPath = new File(corpusPath.getAbsoluteFile() + "/analyses/");
 		if (!analysesPath.exists())
-			throw new PepperModuleException(this, "Cannot import corpus, because an analyses folder does not exist for given uri:"+corpusPath+" .");
+			throw new PepperModuleException(this, "Cannot import corpus, because an analyses folder does not exist for given uri:" + corpusPath + " .");
 		if (!analysesPath.isDirectory())
-			throw new PepperModuleException(this, "Cannot import corpus, because the analyses folder for :"+corpusPath+" is not a folder.");
-		
-		for (File corpusResource: analysesPath.listFiles())
-		{// one folder as super corpus
-			SCorpus sCorpus= null;
-			{//create SCorpus object
-				sCorpus= SaltFactory.eINSTANCE.createSCorpus();
+			throw new PepperModuleException(this, "Cannot import corpus, because the analyses folder for :" + corpusPath + " is not a folder.");
+
+		for (File corpusResource : analysesPath.listFiles()) {// one folder as
+																// super corpus
+			SCorpus sCorpus = null;
+			{// create SCorpus object
+				sCorpus = SaltFactory.eINSTANCE.createSCorpus();
 				sCorpus.setSName(corpusResource.getAbsoluteFile().getName());
 				sCorpusGraph.addSNode(sCorpus);
-			}//create SCorpus object
-			
-			for (File documentResource: corpusResource.listFiles())
-			{//each subfolder must be a document
-				SDocument sDocument= SaltFactory.eINSTANCE.createSDocument();
+			}// create SCorpus object
+
+			for (File documentResource : corpusResource.listFiles()) {// each
+																		// subfolder
+																		// must
+																		// be a
+																		// document
+				SDocument sDocument = SaltFactory.eINSTANCE.createSDocument();
 				sDocument.setSName(documentResource.getName());
 				sCorpusGraph.addSNode(sDocument);
-				SCorpusDocumentRelation sCorpDocRel= SaltFactory.eINSTANCE.createSCorpusDocumentRelation();
+				SCorpusDocumentRelation sCorpDocRel = SaltFactory.eINSTANCE.createSCorpusDocumentRelation();
 				sCorpDocRel.setSCorpus(sCorpus);
 				sCorpDocRel.setSDocument(sDocument);
 				sCorpusGraph.addSRelation(sCorpDocRel);
-				
-				
+
 				getSElementId2ResourceTable().put(sDocument.getSElementId(), URI.createFileURI(documentResource.getAbsolutePath()));
-			}//each subfolder must be a document
+			}// each subfolder must be a document
 		}// one folder as super corpus
 	}
-	
+
 	/**
-	 * Creates a mapper of type {@link EXMARaLDA2SaltMapper}.
-	 * {@inheritDoc PepperModule#createPepperMapper(SElementId)}
+	 * Creates a mapper of type {@link EXMARaLDA2SaltMapper}. {@inheritDoc
+	 * PepperModule#createPepperMapper(SElementId)}
 	 */
 	@Override
-	public PepperMapper createPepperMapper(SElementId sElementId){
-		UAM2SaltMapper mapper= new UAM2SaltMapper();
+	public PepperMapper createPepperMapper(SElementId sElementId) {
+		UAM2SaltMapper mapper = new UAM2SaltMapper();
 		mapper.setResourceOptions(getResourceOptions());
-		return(mapper);
+		return (mapper);
 	}
-	
-	private Map<String, String> resourceOptions= null;
+
+	private Map<String, String> resourceOptions = null;
+
 	public Map<String, String> getResourceOptions() {
-		if (resourceOptions== null)
-		{
+		if (resourceOptions == null) {
 			synchronized (this) {
-				if (resourceOptions== null)
-				{
-					File path2Corpus= new File(this.getCorpusDesc().getCorpusPath().toFileString()+ "/"+PATH_TO_TEXT);
+				if (resourceOptions == null) {
+					File path2Corpus = new File(this.getCorpusDesc().getCorpusPath().toFileString() + "/" + PATH_TO_TEXT);
 					if (!path2Corpus.exists())
-						throw new PepperModuleException(this, "Cannot import document, because path to corpus '"+path2Corpus.getAbsolutePath()+"' does not exist.");
-					resourceOptions= new Hashtable<String, String>();
+						throw new PepperModuleException(this, "Cannot import document, because path to corpus '" + path2Corpus.getAbsolutePath() + "' does not exist.");
+					resourceOptions = new Hashtable<String, String>();
 					resourceOptions.put(UAMResource.PROP_PATH_2_TEXT, path2Corpus.getAbsolutePath());
 				}
 			}
