@@ -21,6 +21,17 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
+import org.corpus_tools.pepper.impl.PepperMapperImpl;
+import org.corpus_tools.pepper.modules.exceptions.PepperModuleException;
+import org.corpus_tools.salt.SaltFactory;
+import org.corpus_tools.salt.common.SDocument;
+import org.corpus_tools.salt.common.STextualDS;
+import org.corpus_tools.salt.common.STextualRelation;
+import org.corpus_tools.salt.common.SToken;
+import org.corpus_tools.salt.core.SAnnotation;
+import org.corpus_tools.salt.core.SLayer;
+import org.corpus_tools.salt.core.SNode;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
@@ -33,17 +44,6 @@ import de.hu_berlin.german.korpling.saltnpepper.model.uam.Text;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMDocument;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.UAMFactory;
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.resources.UAMResourceFactory;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.common.DOCUMENT_STATUS;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.exceptions.PepperModuleException;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.impl.PepperMapperImpl;
-import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.STextualDS;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.STextualRelation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SToken;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SAnnotation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SLayer;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SNode;
 
 public class UAM2SaltMapper extends PepperMapperImpl{
 	private static final Logger logger= LoggerFactory.getLogger(UAM2SaltMapper.class); 
@@ -61,18 +61,19 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 	 */
 	@Override
 	public DOCUMENT_STATUS mapSDocument() {
-		if (getResourceURI()== null)
+		if (getResourceURI()== null){
 			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because uri for UAM document is null.");
+		}
 		if (uamDocument== null){
 //			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because uamDocument is null.");
 			uamDocument= UAMFactory.eINSTANCE.createUAMDocument();
 		}
-		if (getSDocument()== null)
+		if (getDocument()== null){
 			throw new PepperModuleException(this, "Cannot map the given uamDocument to sDocument, because sDocument is null.");
-		
-		if (getSDocument().getSDocumentGraph()== null)
-			getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
-		
+		}
+		if (getDocument().getDocumentGraph()== null){
+			getDocument().setDocumentGraph(SaltFactory.createSDocumentGraph());
+		}
 		
 		ResourceSet resourceSet = new ResourceSetImpl();
 		// Register XML resource factory
@@ -82,8 +83,9 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 		//load resource 
 		Resource resource = resourceSet.createResource(getResourceURI());
 		
-		if (resource== null)
+		if (resource== null){
 			throw new PepperModuleException(this, "Cannot load the UAMDocument for path: "+ getResourceURI()+", becuase the resource is null.");
+		}
 		try {
 			resource.load(getResourceOptions());
 		} catch (IOException e) 
@@ -100,10 +102,10 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 			}
 		}
 		
-		getSDocument().setSName(uamDocument.getName());
-		getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
+		getDocument().setName(uamDocument.getName());
+		getDocument().setDocumentGraph(SaltFactory.createSDocumentGraph());
 		{//map primary texts
-			text2STextualDS= mapText2STextualDS(uamDocument, getSDocument());
+			text2STextualDS= mapText2STextualDS(uamDocument, getDocument());
 		}//map primary texts
 		
 		if (	(uamDocument.getLayers()!= null)&&
@@ -114,7 +116,7 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 				if (layer!= null)
 				{
 					SLayer sLayer= null;
-					sLayer= this.mapLayer2SLayer(layer, getSDocument());
+					sLayer= this.mapLayer2SLayer(layer, getDocument());
 					if (	(layer.getSegments()!= null)&&
 							(layer.getSegments().size()> 0))
 					{
@@ -122,8 +124,8 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 						{
 							if(segment!= null)
 							{
-								SToken sToken= mapSegments2SToken(segment, getSDocument());
-								sToken.getSLayers().add(sLayer);
+								SToken sToken= mapSegments2SToken(segment, getDocument());
+								sToken.getLayers().add(sLayer);
 								mapSegment2SAnnotation(segment, sToken);
 							}
 						}
@@ -159,10 +161,10 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 			text2STextualDS= new Hashtable<Text, STextualDS>();
 			for (Text text: uamDocument.getTexts())
 			{
-				STextualDS sText= SaltFactory.eINSTANCE.createSTextualDS();
-				sText.setSName(text.getName());
-				sText.setSText(text.getText());
-				sDocument.getSDocumentGraph().addSNode(sText);
+				STextualDS sText= SaltFactory.createSTextualDS();
+				sText.setName(text.getName());
+				sText.setText(text.getText());
+				sDocument.getDocumentGraph().addNode(sText);
 				text2STextualDS.put(text, sText);
 			}
 		}
@@ -180,21 +182,21 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 		SLayer sLayer= null;
 		if (layer!= null)
 		{
-			sLayer= SaltFactory.eINSTANCE.createSLayer();
-			sLayer.setSName(layer.getName());
+			sLayer= SaltFactory.createSLayer();
+			sLayer.setName(layer.getName());
 			
-			SAnnotation sAnno= SaltFactory.eINSTANCE.createSAnnotation();
+			SAnnotation sAnno= SaltFactory.createSAnnotation();
 			
-			sAnno.setSName("complete");
-			sAnno.setSValue(layer.getComplete());
-			sLayer.addSAnnotation(sAnno);
+			sAnno.setName("complete");
+			sAnno.setValue(layer.getComplete());
+			sLayer.addAnnotation(sAnno);
 			
-			sAnno= SaltFactory.eINSTANCE.createSAnnotation();
-			sAnno.setSName("lang");
-			sAnno.setSValue(layer.getLang());
-			sLayer.addSAnnotation(sAnno);
+			sAnno= SaltFactory.createSAnnotation();
+			sAnno.setName("lang");
+			sAnno.setValue(layer.getLang());
+			sLayer.addAnnotation(sAnno);
 			
-			sDocument.getSDocumentGraph().addSLayer(sLayer);
+			sDocument.getDocumentGraph().addLayer(sLayer);
 		}
 		return(sLayer);
 	}
@@ -212,24 +214,24 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 		SToken sToken= null;
 		if (segment!= null)
 		{
-			sToken= SaltFactory.eINSTANCE.createSToken();
-			sDocument.getSDocumentGraph().addSNode(sToken);
+			sToken= SaltFactory.createSToken();
+			sDocument.getDocumentGraph().addNode(sToken);
 			{//create relation to STextualDS
 				if (segment.getSourceText()!= null)
 				{
 					STextualDS sText= text2STextualDS.get(segment.getSourceText());
 					if (sText!= null)
 					{
-						STextualRelation sTextRel= SaltFactory.eINSTANCE.createSTextualRelation();
-						sTextRel.setSToken(sToken);
-						sTextRel.setSTextualDS(sText);
-						sTextRel.setSStart(segment.getStart());
-						sTextRel.setSEnd(segment.getEnd());
-						sDocument.getSDocumentGraph().addSRelation(sTextRel);
+						STextualRelation sTextRel= SaltFactory.createSTextualRelation();
+						sTextRel.setSource(sToken);
+						sTextRel.setTarget(sText);
+						sTextRel.setStart(segment.getStart());
+						sTextRel.setEnd(segment.getEnd());
+						sDocument.getDocumentGraph().addRelation(sTextRel);
 					}
-					logger.warn("Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getSId()+"'.");
+					logger.warn("Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getId()+"'.");
 				}
-				logger.warn("Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getSId()+"'.");
+				logger.warn("Some SToken objects exist without refering to a STextualDS in SDocument '"+sDocument.getId()+"'.");
 			}//create relation to STextualDS
 		}
 		return(sToken);
@@ -244,14 +246,14 @@ public class UAM2SaltMapper extends PepperMapperImpl{
 	{
 		SAnnotation sAnno= null;
 		
-		sAnno= SaltFactory.eINSTANCE.createSAnnotation();
-		sAnno.setSName("state");
-		sAnno.setSValue(segment.getState());
-		sNode.addSAnnotation(sAnno);
+		sAnno= SaltFactory.createSAnnotation();
+		sAnno.setName("state");
+		sAnno.setValue(segment.getState());
+		sNode.addAnnotation(sAnno);
 		
-		sAnno= SaltFactory.eINSTANCE.createSAnnotation();
-		sAnno.setSName("features");
-		sAnno.setSValue(segment.getFeatures());
-		sNode.addSAnnotation(sAnno);
+		sAnno= SaltFactory.createSAnnotation();
+		sAnno.setName("features");
+		sAnno.setValue(segment.getFeatures());
+		sNode.addAnnotation(sAnno);
 	}
 }

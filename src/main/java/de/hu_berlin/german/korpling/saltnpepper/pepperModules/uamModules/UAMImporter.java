@@ -21,22 +21,22 @@ import java.io.File;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.corpus_tools.pepper.impl.PepperImporterImpl;
+import org.corpus_tools.pepper.modules.PepperImporter;
+import org.corpus_tools.pepper.modules.PepperMapper;
+import org.corpus_tools.pepper.modules.exceptions.PepperModuleException;
+import org.corpus_tools.salt.SaltFactory;
+import org.corpus_tools.salt.common.SCorpus;
+import org.corpus_tools.salt.common.SCorpusDocumentRelation;
+import org.corpus_tools.salt.common.SCorpusGraph;
+import org.corpus_tools.salt.common.SDocument;
+import org.corpus_tools.salt.graph.Identifier;
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.hu_berlin.german.korpling.saltnpepper.model.uam.resources.UAMResource;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperImporter;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperMapper;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.exceptions.PepperModuleException;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.impl.PepperImporterImpl;
-import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpus;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusDocumentRelation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusGraph;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 
 /**
  * This PepperImporter imports data from the UAM tools output. Please note, that
@@ -96,35 +96,32 @@ public class UAMImporter extends PepperImporterImpl implements PepperImporter {
 																// super corpus
 			SCorpus sCorpus = null;
 			{// create SCorpus object
-				sCorpus = SaltFactory.eINSTANCE.createSCorpus();
-				sCorpus.setSName(corpusResource.getAbsoluteFile().getName());
-				sCorpusGraph.addSNode(sCorpus);
+				sCorpus = SaltFactory.createSCorpus();
+				sCorpus.setName(corpusResource.getAbsoluteFile().getName());
+				sCorpusGraph.addNode(sCorpus);
 			}// create SCorpus object
 
-			for (File documentResource : corpusResource.listFiles()) {// each
-																		// subfolder
-																		// must
-																		// be a
-																		// document
-				SDocument sDocument = SaltFactory.eINSTANCE.createSDocument();
-				sDocument.setSName(documentResource.getName());
-				sCorpusGraph.addSNode(sDocument);
-				SCorpusDocumentRelation sCorpDocRel = SaltFactory.eINSTANCE.createSCorpusDocumentRelation();
-				sCorpDocRel.setSCorpus(sCorpus);
-				sCorpDocRel.setSDocument(sDocument);
-				sCorpusGraph.addSRelation(sCorpDocRel);
+			for (File documentResource : corpusResource.listFiles()) {
+				// each subfolder must be a document
+				SDocument sDocument = SaltFactory.createSDocument();
+				sDocument.setName(documentResource.getName());
+				sCorpusGraph.addNode(sDocument);
+				SCorpusDocumentRelation sCorpDocRel = SaltFactory.createSCorpusDocumentRelation();
+				sCorpDocRel.setSource(sCorpus);
+				sCorpDocRel.setTarget(sDocument);
+				sCorpusGraph.addRelation(sCorpDocRel);
 
-				getSElementId2ResourceTable().put(sDocument.getSElementId(), URI.createFileURI(documentResource.getAbsolutePath()));
+				getIdentifier2ResourceTable().put(sDocument.getIdentifier(), URI.createFileURI(documentResource.getAbsolutePath()));
 			}// each subfolder must be a document
 		}// one folder as super corpus
 	}
 
 	/**
 	 * Creates a mapper of type {@link EXMARaLDA2SaltMapper}. {@inheritDoc
-	 * PepperModule#createPepperMapper(SElementId)}
+	 * PepperModule#createPepperMapper(Identifier)}
 	 */
 	@Override
-	public PepperMapper createPepperMapper(SElementId sElementId) {
+	public PepperMapper createPepperMapper(Identifier Identifier) {
 		UAM2SaltMapper mapper = new UAM2SaltMapper();
 		mapper.setResourceOptions(getResourceOptions());
 		return (mapper);
